@@ -1,25 +1,27 @@
 const Organization = require("../models/orgModel");
 
 const tenantContext = async(req,res,next)=>{
-    const orgId = req.headers["x-org-id"];
+    const orgId = req.orgId || req.headers["x-org-id"];
     if(!orgId){
         return res.status(400).json({
-            message:"org context missing",
+            message:"Org context missing",
         });
     }
 
-    const org = Organization.findById(orgId);
-    if(!org){
-        return res.status(404).json({
-            message:"Org not found"
-        })
+    try {
+        const org = await Organization.findById(orgId);
+        if(!org){
+            return res.status(404).json({
+                message:"Organization not found"
+            });
+        }
+
+        req.orgId = orgId;
+        req.org = org;
+        next();
+    } catch (err) {
+        return res.status(400).json({ message: "Invalid organization ID format" });
     }
-
-    //attach to req
-    req.orgId=orgId;
-    req.org=org;
-
-    next();
 };
 
 module.exports=tenantContext;

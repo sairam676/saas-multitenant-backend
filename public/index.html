@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Multi-Tenant Platform | Enterprise Isolation & Security</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Background Animated Gradients -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- Main Navigation Header -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">OmniTenant</span>
+                    <span class="brand-subtitle">SaaS Engine</span>
+                </div>
+            </div>
+
+            <!-- Tenant Context Indicator (When Logged In) -->
+            <div id="tenantContextBadge" class="tenant-badge hidden">
+                <div class="tenant-pulse"></div>
+                <div class="tenant-details">
+                    <span id="navOrgName" class="tenant-name">Loading...</span>
+                    <span id="navUserRole" class="tenant-role">OWNER</span>
+                </div>
+                <span id="navUserName" class="user-chip">User</span>
+            </div>
+
+            <div class="nav-actions">
+                <button id="rateLimitBtn" class="btn btn-outline btn-sm hidden">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Rate Limit Test</span>
+                </button>
+                <div id="guestNav">
+                    <button class="btn btn-ghost" onclick="app.showModal('loginModal')">Sign In</button>
+                    <button class="btn btn-primary" onclick="app.showModal('signupModal')">Register Tenant</button>
+                </div>
+                <div id="userNav" class="hidden">
+                    <button class="btn btn-ghost btn-danger-ghost" onclick="app.logout()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="main-content">
+        <!-- Guest Hero Section (Visible when not logged in) -->
+        <section id="guestHero" class="hero-section">
+            <div class="hero-card glass-panel">
+                <div class="hero-badge">
+                    <span class="badge-dot"></span> Production Architecture Engine
+                </div>
+                <h1 class="hero-title">Multi-Tenant SaaS Platform with Strict Data Isolation</h1>
+                <p class="hero-description">
+                    Enterprise backend architecture with orgId data boundary enforcement, JWT-based tenant resolution, role-based access control (RBAC), append-only audit logging, soft-deletes, and per-tenant rate limiting.
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary btn-lg" onclick="app.showModal('signupModal')">
+                        Create Organization
+                    </button>
+                    <button class="btn btn-secondary btn-lg" onclick="app.showModal('loginModal')">
+                        Sign In to Existing Tenant
+                    </button>
+                </div>
+
+                <!-- Feature Grid -->
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon icon-blue">🛡️</div>
+                        <h3>Strict Tenant Isolation</h3>
+                        <p>All database queries are automatically scoped by organization ID derived from server-signed JWT tokens.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon icon-purple">🔐</div>
+                        <h3>Role-Based Access Control</h3>
+                        <p>Centralized RBAC middleware enforcing OWNER, ADMIN, and MEMBER privileges with bcrypt authentication.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon icon-emerald">⚡</div>
+                        <h3>Per-Tenant Rate Limiting</h3>
+                        <p>Protects shared infrastructure against tenant abuse by enforcing request windows per orgId context.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon icon-amber">📜</div>
+                        <h3>Audit Logging & Soft Deletes</h3>
+                        <p>Non-blocking append-only audit trails and non-destructive resource soft deletes with full restore controls.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Authenticated Dashboard View (Visible when logged in) -->
+        <section id="authenticatedDashboard" class="dashboard-section hidden">
+            <!-- Stats Overview Bar -->
+            <div class="stats-bar">
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon">🏢</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Active Organization</span>
+                        <h3 id="statOrgName" class="stat-value">...</h3>
+                    </div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Active Resources</span>
+                        <h3 id="statResourcesCount" class="stat-value">0</h3>
+                    </div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Team Members</span>
+                        <h3 id="statMembersCount" class="stat-value">0</h3>
+                    </div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-info">
+                        <span class="stat-label">Tenant Rate Limit</span>
+                        <h3 id="statRateRemaining" class="stat-value">100 / 100</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation Bar -->
+            <div class="tab-bar glass-panel">
+                <button class="tab-btn active" onclick="app.switchTab('resourcesTab')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                    Resources Management
+                </button>
+                <button class="tab-btn" onclick="app.switchTab('membersTab')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Team & Invitations
+                </button>
+                <button id="auditTabBtn" class="tab-btn" onclick="app.switchTab('auditTab')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    Audit Trail
+                </button>
+                <button class="tab-btn" onclick="app.switchTab('sandboxTab')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                    Security & Rate Limit Sandbox
+                </button>
+            </div>
+
+            <!-- Tab 1: Resources Management -->
+            <div id="resourcesTab" class="tab-content active">
+                <div class="content-split">
+                    <!-- Create Resource Form -->
+                    <div class="glass-panel form-card">
+                        <div class="card-header">
+                            <h3>Create New Resource</h3>
+                            <span class="badge badge-primary">Tenant Scoped</span>
+                        </div>
+                        <form id="createResourceForm" onsubmit="app.handleCreateResource(event)">
+                            <div class="form-group">
+                                <label for="resourceTitle">Resource Title</label>
+                                <input type="text" id="resourceTitle" class="form-input" placeholder="e.g., Production API Key / Storage Bucket" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="resourceDesc">Description (Optional)</label>
+                                <input type="text" id="resourceDesc" class="form-input" placeholder="Configuration metadata or details">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">
+                                Create Resource
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Active Resources List -->
+                    <div class="glass-panel list-card">
+                        <div class="card-header">
+                            <h3>Active Organization Resources</h3>
+                            <button class="btn btn-ghost btn-sm" onclick="app.loadResources()">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <div id="resourcesList" class="resource-grid">
+                            <div class="empty-state">Loading tenant resources...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trash / Soft-Deleted Resources Section (OWNER/ADMIN only) -->
+                <div id="trashSection" class="glass-panel trash-card mt-6">
+                    <div class="card-header">
+                        <div class="trash-title">
+                            <h3>🗑️ Soft-Deleted Resources (Trash)</h3>
+                            <span class="badge badge-warning">Soft Delete Recovery Zone</span>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="app.loadTrash()">Refresh Trash</button>
+                    </div>
+                    <div id="trashList" class="resource-grid">
+                        <div class="empty-state">No deleted resources in trash.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Team & Invitations -->
+            <div id="membersTab" class="tab-content">
+                <div class="content-split">
+                    <!-- Invite Member Form (OWNER/ADMIN) -->
+                    <div id="inviteFormCard" class="glass-panel form-card">
+                        <div class="card-header">
+                            <h3>Invite Team Member</h3>
+                            <span class="badge badge-accent">RBAC Protected</span>
+                        </div>
+                        <form id="inviteUserForm" onsubmit="app.handleInviteUser(event)">
+                            <div class="form-group">
+                                <label for="inviteEmail">Member Email Address</label>
+                                <input type="email" id="inviteEmail" class="form-input" placeholder="colleague@company.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="inviteRole">Assigned Role</label>
+                                <select id="inviteRole" class="form-input">
+                                    <option value="MEMBER">MEMBER (Read/Write Resources)</option>
+                                    <option value="ADMIN">ADMIN (Invite Users & Soft Delete)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">
+                                Generate Invitation Link
+                            </button>
+                        </form>
+
+                        <!-- Generated Link Card -->
+                        <div id="generatedLinkCard" class="generated-link-box hidden">
+                            <label>Simulated Invitation Link:</label>
+                            <div class="link-copy-row">
+                                <input type="text" id="generatedLinkInput" readonly class="form-input code-font">
+                                <button class="btn btn-secondary btn-sm" onclick="app.copyInviteLink()">Copy</button>
+                            </div>
+                            <p class="help-text">Copy link to accept invitation as a new user.</p>
+                        </div>
+                    </div>
+
+                    <!-- Members & Invites Tables -->
+                    <div class="glass-panel list-card">
+                        <div class="card-header">
+                            <h3>Organization Members</h3>
+                            <button class="btn btn-ghost btn-sm" onclick="app.loadMembers()">Refresh</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Joined Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="membersTableBody">
+                                    <tr><td colspan="4" class="text-center">Loading members...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="card-header mt-6">
+                            <h3>Pending Invitations</h3>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Invited Email</th>
+                                        <th>Role</th>
+                                        <th>Token</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invitesTableBody">
+                                    <tr><td colspan="4" class="text-center">No pending invitations.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Audit Trail -->
+            <div id="auditTab" class="tab-content">
+                <div class="glass-panel card-full">
+                    <div class="card-header">
+                        <div>
+                            <h3>Append-Only Organization Audit Trail</h3>
+                            <p class="subtitle">Non-blocking audit log records tracking organization changes and user actions.</p>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="app.loadAuditLogs()">Refresh Audit Trail</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Action</th>
+                                    <th>Resource Type</th>
+                                    <th>Actor ID</th>
+                                    <th>Metadata</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditTableBody">
+                                <tr><td colspan="5" class="text-center">Loading audit history...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Security & Rate Limit Sandbox -->
+            <div id="sandboxTab" class="tab-content">
+                <div class="glass-panel card-full">
+                    <div class="card-header">
+                        <div>
+                            <h3>Per-Tenant Rate Limiting & Isolation Sandbox</h3>
+                            <p class="subtitle">Stress test orgId-keyed request rate limits and verify tenant isolation behavior.</p>
+                        </div>
+                    </div>
+
+                    <div class="sandbox-controls">
+                        <div class="sandbox-box glass-panel">
+                            <h4>⚡ Per-Tenant Rate Limiter Test</h4>
+                            <p>Sends repeated batch requests against <code>/api/resources</code> to test the 100 reqs/min threshold.</p>
+                            <div class="sandbox-btn-row">
+                                <button class="btn btn-primary" onclick="app.runRateLimitStressTest(10)">Send 10 Requests</button>
+                                <button class="btn btn-danger" onclick="app.runRateLimitStressTest(105)">Send 105 Requests (Trigger 429)</button>
+                            </div>
+                        </div>
+
+                        <div class="sandbox-box glass-panel">
+                            <h4>🔒 JWT Security & Context Inspector</h4>
+                            <p>Verify decoded JWT tenant context parameters currently attached to authorization headers.</p>
+                            <div id="tokenInspector" class="code-box">Loading token context...</div>
+                        </div>
+                    </div>
+
+                    <!-- Sandbox Output Log -->
+                    <div class="sandbox-output-section mt-6">
+                        <h4>Live Request Log Output</h4>
+                        <div id="sandboxConsole" class="console-box">
+                            System ready for security sandbox testing.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+
+    <!-- Signup Tenant Modal -->
+    <div id="signupModal" class="modal-overlay hidden">
+        <div class="modal-box glass-panel">
+            <div class="modal-header">
+                <h2>Create New SaaS Tenant</h2>
+                <button class="close-btn" onclick="app.hideModal('signupModal')">&times;</button>
+            </div>
+            <form onsubmit="app.handleSignup(event)">
+                <div class="form-group">
+                    <label>Organization / Company Name</label>
+                    <input type="text" id="signupOrgName" class="form-input" placeholder="e.g., Acme Corp" required>
+                </div>
+                <div class="form-group">
+                    <label>Owner Full Name</label>
+                    <input type="text" id="signupName" class="form-input" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="signupEmail" class="form-input" placeholder="owner@acme.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" class="form-input" placeholder="At least 6 characters" minlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full btn-lg">Create Organization & Owner Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal-overlay hidden">
+        <div class="modal-box glass-panel">
+            <div class="modal-header">
+                <h2>Sign In to Organization</h2>
+                <button class="close-btn" onclick="app.hideModal('loginModal')">&times;</button>
+            </div>
+            <form onsubmit="app.handleLogin(event)">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="user@company.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Your account password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full btn-lg">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Accept Invite Modal -->
+    <div id="acceptInviteModal" class="modal-overlay hidden">
+        <div class="modal-box glass-panel">
+            <div class="modal-header">
+                <h2>Accept Team Invitation</h2>
+                <button class="close-btn" onclick="app.hideModal('acceptInviteModal')">&times;</button>
+            </div>
+            <form onsubmit="app.handleAcceptInvite(event)">
+                <input type="hidden" id="acceptInviteToken">
+                <div class="invite-info-banner">
+                    <span id="inviteBannerText">Loading invitation details...</span>
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="acceptInviteName" class="form-input" placeholder="Your full name" required>
+                </div>
+                <div class="form-group">
+                    <label>Create Password</label>
+                    <input type="password" id="acceptInvitePassword" class="form-input" placeholder="At least 6 characters" minlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full btn-lg">Join Organization</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

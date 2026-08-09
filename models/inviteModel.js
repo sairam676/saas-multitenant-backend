@@ -10,7 +10,7 @@ const inviteSchema=new mongoose.Schema(
         orgId:{
             type:mongoose.Schema.Types.ObjectId,
             ref:"Organization",
-            require:true,
+            required:true,
         },
         role:{
             type:String,
@@ -21,7 +21,7 @@ const inviteSchema=new mongoose.Schema(
             type:String,
             required:true
         },
-        acccepted:{
+        accepted:{
             type:Boolean,
             default:false,
         },
